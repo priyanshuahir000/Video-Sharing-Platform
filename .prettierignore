@@ -1,0 +1,39 @@
+# Ignore build and distribution folders
+node_modules/
+dist/
+build/
+
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore logs
+*.log
+
+# Ignore configuration and lock files
+package-lock.json
+yarn.lock
+
+# Ignore database-related files
+*.sqlite
+*.db
+
+# Ignore system and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Ignore compiled files
+coverage/
+public/
+
+# Ignore specific frontend and backend assets
+client/build/
+client/node_modules/
+server/node_modules/
+
+# Optional: Ignore specific frontend and backend test coverage folders if they exist
+client/coverage/
+server/coverage/
