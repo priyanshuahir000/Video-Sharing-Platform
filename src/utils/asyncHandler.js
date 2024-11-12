@@ -6,7 +6,8 @@
  * @returns {Function} A new route handler that catches errors and passes them to the next middleware.
  */
 
-const asyncHandler = (fn) => async (req, res, next) => {
+const asyncHandler = (fn) =>  {
+  return async (req, res, next) => {
   try {
     await fn(req, res, next);
   } catch (err) {
@@ -15,6 +16,7 @@ const asyncHandler = (fn) => async (req, res, next) => {
       message: err.message,
     });
   }
+};
 };
 
 export { asyncHandler };
