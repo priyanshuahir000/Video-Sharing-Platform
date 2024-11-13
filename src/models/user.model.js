@@ -52,6 +52,14 @@ const userSchema = new Schema(
   }
 );
 
+userSchema.post("save", function (error, doc, next) {
+  if (error.name === "MongoError" && error.code === 11000) {
+    next(new Error("Username already exists. Please choose another one."));
+  } else {
+    next(error);
+  }
+});
+
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     return next();

@@ -18,8 +18,8 @@ const registerUser = asyncHandler(async (req, res) => {
   const { email, password, fullName, username } = req.body;
 
   if (
-    [fullName, email, username, password].select((field) => {
-      field.trim() === "";
+    [fullName, email, username, password].some((field) => {
+      field?.trim() === "";
     })
   ) {
     throw new apiError(400, "All fields are required");
@@ -39,26 +39,32 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.files?.coverImage[0].path;
 
   if (!avatarLocalPath) {
-    throw new apiError(400, "Avatar file is required!");
+    throw new apiError(400, `Avatar file is required! ( Local Path Error )`);
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    throw new apiError(400, "Avatar file is required!");
+    throw new apiError(400, "Avatar file is required! ( Cloudinary Error )");
   }
 
-  const user = await User.create({
-    email,
-    password,
-    fullName,
-    username,
-    avatar: avatar.url,
-    coverImage: coverImage.url,
-  });
+  try {
+    const user = await User.create({
+      email,
+      password,
+      fullName,
+      username,
+      avatar: avatar.url,
+      coverImage: coverImage.url,
+    });
+  } catch (error) {
+    throw new apiError(500, "User creation failed");
+  }
 
-  const createdUser = User.findById(user._id).select("-password -refreshToken");
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
   if (!createdUser) {
     throw new apiError(500, "User creation failed");
