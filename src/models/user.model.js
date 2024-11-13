@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import jsonwebtoken from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
@@ -52,16 +52,9 @@ const userSchema = new Schema(
   }
 );
 
-userSchema.post("save", function (error, doc, next) {
-  if (error.name === "MongoError" && error.code === 11000) {
-    next(new Error("Username already exists. Please choose another one."));
-  } else {
-    next(error);
-  }
-});
 
 userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
+  if (!this.isModified("password")) {
     return next();
   }
   this.password = await bcrypt.hash(this.password, 10);

@@ -48,9 +48,9 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!avatar) {
     throw new apiError(400, "Avatar file is required! ( Cloudinary Error )");
   }
-
+  let user;
   try {
-    const user = await User.create({
+    user = await User.create({
       email,
       password,
       fullName,
@@ -59,7 +59,7 @@ const registerUser = asyncHandler(async (req, res) => {
       coverImage: coverImage.url,
     });
   } catch (error) {
-    throw new apiError(500, "User creation failed");
+    throw new apiError(500, "User creation failed [ 1 ]");
   }
 
   const createdUser = await User.findById(user._id).select(
@@ -67,7 +67,7 @@ const registerUser = asyncHandler(async (req, res) => {
   );
 
   if (!createdUser) {
-    throw new apiError(500, "User creation failed");
+    throw new apiError(500, "User creation failed [ 2 ]");
   }
 
   res
