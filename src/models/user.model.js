@@ -31,7 +31,7 @@ const userSchema = new Schema(
     },
     coverImage: {
       type: String, // Cloudinary URL
-      required: true,
+      default: "",
     },
     watchHistory: [
       {
@@ -51,7 +51,6 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
-
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
