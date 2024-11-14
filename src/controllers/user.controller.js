@@ -239,4 +239,60 @@ const refreshToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  // 1. Extract user details from the request body
+  // 2. Check if the user already exists in the database
+  // 3. Check if the password is correct
+  // 4. Generate a JWT Access Token and a Refresh Token
+  // 5. Send a response back to the client with the generated token
+
+  const { oldPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new apiError(404, "User not found");
+  }
+
+  const isPasswordValid = await user.isCorrectPassword(oldPassword);
+
+  if (!isPasswordValid) {
+    throw new apiError(401, "Invalid credentials");
+  }
+
+  user.password = newPassword;
+
+  await user.save({ validateBeforeSave: false });
+
+  const { accessToken, refreshToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
+
+  const cookieOption = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOption)
+    .cookie("refreshToken", refreshToken, cookieOption)
+    .json(
+      new apiResponse(
+        200,
+        {
+          accessToken,
+          refreshToken,
+        },
+        "Password changed successfully!"
+      )
+    );
+});
+
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshToken,
+  changeCurrentPassword,
+};
