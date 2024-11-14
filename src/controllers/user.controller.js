@@ -300,6 +300,105 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, user, "User details fetched successfully!"));
 });
 
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, username, email } = req.body;
+
+  if (!fullName && !username && !email) {
+    throw new apiError(400, "No data to update");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        fullName: fullName || req.user.fullName,
+        username: username || req.user.username,
+        email: email || req.user.email,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!user) {
+    throw new apiError(500, "User details update failed");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "User details updated successfully!"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new apiError(400, `Avatar file is required! ( Local Path Error )`);
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar) {
+    throw new apiError(400, "Avatar file is required! ( Cloudinary Error )");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  if (!user) {
+    throw new apiError(500, "User avatar update failed");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "User avatar updated successfully!"));
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+
+  if (!coverImageLocalPath) {
+    throw new apiError(
+      400,
+      `Cover Image file is required! ( Local Path Error )`
+    );
+  }
+
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!coverImage) {
+    throw new apiError(
+      400,
+      "Cover Image file is required! ( Cloudinary Error )"
+    );
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  if (!user) {
+    throw new apiError(500, "User cover image update failed");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "User cover image updated successfully!"))
+});
 export {
   registerUser,
   loginUser,
@@ -307,4 +406,7 @@ export {
   refreshToken,
   changeCurrentPassword,
   getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
 };
