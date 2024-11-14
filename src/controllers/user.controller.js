@@ -155,6 +155,34 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+  // 1. Clear the refresh token from the user's document in the database
+  // 2. Send a response back to the client with a message that the user has been logged out
 
+  const user = req.user; // user is available from the verifyJWT middleware
 
-export { registerUser, loginUser};
+  await User.findByIdAndUpdate(
+    user._id,
+    {
+      $set: {
+        refreshToken: null,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const cookieOption = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieOption)
+    .clearCookie("refreshToken", cookieOption)
+    .json(new apiResponse(200, {}, "User logged out successfully!"));
+});
+
+export { registerUser, loginUser, logoutUser };
