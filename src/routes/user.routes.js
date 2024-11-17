@@ -6,6 +6,7 @@ import {
   refreshToken,
   changeCurrentPassword,
   getCurrentUser,
+  getUserChannelProfile,
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
@@ -38,16 +39,19 @@ router.route("/refresh-token").post(refreshToken);
 
 router.route("/change-current-password").post(verifyJWT, changeCurrentPassword);
 
-router.route("/get-current-user").post(verifyJWT, getCurrentUser);
+router.route("/get-current-user").get(verifyJWT, getCurrentUser);
 
-router.route("/update-account-details").post(verifyJWT, updateAccountDetails);
+router.route("/update-account-details").patch(verifyJWT, updateAccountDetails);
 
 router
   .route("/update-avatar")
-  .post(verifyJWT, upload.single("avatar"), updateUserAvatar);
+  .patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 
 router
   .route("/update-cover-image")
-  .post(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+  .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 
+router.route("/channel/:username").get(verifyJWT, getUserChannelProfile);
+
+router.route("/watch-history/:username").get(verifyJWT, getUserChannelProfile);
 export default router;
