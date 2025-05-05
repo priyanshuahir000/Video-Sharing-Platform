@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose"; // Import mongoose
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -21,16 +22,6 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // 1. Extract user details from the request body
-  // 2. Validate the user details (e.g., check if email is valid, password is strong enough)
-  // 3. Check if the user already exists in the database
-  // 4. Check for images, check for avatar
-  // 5. Upload them to cloudinary
-  // 6. Create user object - create entry in db
-  // 7. remove password and resfreshToken from the response
-  // 8. check for user creation
-  // 9. Send a response back to the client with the created user's details (excluding the password)
-
   const { email, password, fullName, username } = req.body;
 
   if (
@@ -101,12 +92,6 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  // 1. Extract user details from the request body
-  // 2. Check if the user already exists in the database
-  // 3. Check if the password is correct
-  // 4. Generate a JWT Access Token and a Refresh Token
-  // 5. Send a response back to the client with the generated token
-
   const { email, username, password } = req.body;
 
   if (!username && !email) {
@@ -157,10 +142,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  // 1. Clear the refresh token from the user's document in the database
-  // 2. Send a response back to the client with a message that the user has been logged out
-
-  const user = req.user; // user is available from the verifyJWT middleware
+  const user = req.user;
 
   await User.findByIdAndUpdate(
     user._id,
@@ -240,12 +222,6 @@ const refreshToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-  // 1. Extract user details from the request body
-  // 2. Check if the user already exists in the database
-  // 3. Check if the password is correct
-  // 4. Generate a JWT Access Token and a Refresh Token
-  // 5. Send a response back to the client with the generated token
-
   const { oldPassword, newPassword } = req.body;
 
   const user = await User.findById(req.user._id);
@@ -410,7 +386,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const channel = await User.aggregate([
     {
       $match: {
-        username: username?.lowercase(),
+        username: username?.toLowerCase(),
       },
     },
     {
@@ -470,12 +446,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
-      match: {
-        _id: mongoose.Types.objectId(req.user._id),
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
     {
-      lookup: {
+      $lookup: {
         from: "videos",
         localField: "watchHistory",
         foreignField: "_id",
@@ -486,27 +462,46 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               from: "users",
               localField: "owner",
               foreignField: "_id",
-              as: "owner",
+              as: "ownerDetails",
               pipeline: [
                 {
-                  project: {
+                  $project: {
                     fullName: 1,
                     username: 1,
                     avatar: 1,
-                  },
-                  $addFields: {
-                    owner: {
-                      $first: "$owner",
-                    },
                   },
                 },
               ],
             },
           },
+          {
+            $addFields: {
+              owner: {
+                $first: "$ownerDetails",
+              },
+            },
+          },
+          {
+            $project: {
+              ownerDetails: 0,
+            },
+          },
         ],
       },
     },
+    {
+      $project: {
+        watchHistory: 1,
+        _id: 0,
+      },
+    },
   ]);
+
+  if (!user?.length || !user[0].watchHistory) {
+    return res
+      .status(200)
+      .json(new apiResponse(200, [], "Watch history fetched successfully!"));
+  }
 
   return res
     .status(200)
